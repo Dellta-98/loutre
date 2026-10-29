@@ -1,7 +1,7 @@
-{
-  "name": "Loutre — Tout va bien",
+﻿{
+  "name": "Loutre — le coin positif",
   "short_name": "Loutre",
-  "description": "Votre assistant personnel qui vous rassure, quoi qu'il arrive.",
+  "description": "La fausse IA de positivité pour papoter, jouer et garder les pieds sur terre.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -16,3 +16,4 @@
     }
   ]
 }
+

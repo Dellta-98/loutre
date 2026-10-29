@@ -1,10 +1,11 @@
-
-const CACHE = "loutre-v5";
+﻿
+const CACHE = "loutre-v8";
 const FILES = [
   "./",
   "./index.html",
   "./style.css",
   "./app.js",
+  "./conversations.js",
   "./manifest.json",
   "./icon.svg"
 ];
@@ -80,3 +81,7 @@ self.addEventListener("fetch", event => {
     );
   }
 });
+
+
+
+

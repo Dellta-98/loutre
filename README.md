@@ -1,15 +1,18 @@
-# Loutre ? fausse IA de positivit?
+﻿# Loutre — fausse IA de positivité
 
-Loutre est un petit compagnon de conversation statique en fran?ais. Elle fonctionne dans le navigateur, sans serveur et sans API. Ses r?ponses viennent d'une biblioth?que de th?mes, avec des variations et quelques relances pour garder l'?change l?ger.
+Compagnon de conversation en français, statique et sans API. Les échanges restent en mémoire dans l'onglet courant et ne sont pas envoyés à un serveur.
 
-## Lancer
+## Publier sur GitHub Pages
 
-Ouvre `index.html` dans un navigateur. Pour installer le mode hors ligne, h?berge le dossier sur un serveur statique qui sert aussi `sw.js`.
+Dépose ensemble `index.html`, `app.js`, `conversations.js`, `style.css`, `manifest.json`, `icon.svg` et `sw.js` à la racine du dépôt.
 
-## Ajouter des conversations
+## Contenu
 
-Dans `app.js`, ajoute un objet dans le tableau `themes` avec un `name`, une expression r?guli?re `pattern` et un tableau `replies`. Les motifs sont test?s dans l'ordre : les sujets sp?cifiques doivent appara?tre avant les sujets g?n?raux.
+- 26 thèmes avec réponses et relances adaptées.
+- Plus de 140 questions surprises, 15 mini-jeux, des boosts et des amorces de conversation variables.
+- Mémoire temporaire du sujet, du prénom et de quelques goûts. Le bouton « nouvelle conversation » efface cette mémoire.
+- Réactions visuelles, animation de la loutre et suggestions pour continuer ou changer de sujet.
+- Réponse prioritaire en cas de message de crise, avec les numéros d'aide en France.
+- Cache hors ligne après le premier chargement.
 
-## Personnalit?
-
-Loutre est volontairement tr?s positive, mais essaie de ne pas nier les difficult?s. Elle indique clairement qu'il s'agit d'un programme. Les phrases d'aide en cas de crise restent prioritaires sur les r?ponses l?g?res.
+Loutre reste un moteur à réponses pré-écrites : elle n'a pas de modèle génératif et peut mal comprendre une phrase inhabituelle. Pour ajouter des sujets, modifie `conversations.js` : chaque thème contient `name`, `keys`, `replies` et `qs`.

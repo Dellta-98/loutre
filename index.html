@@ -1,53 +1,45 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="fr">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#101713">
-  <meta name="description" content="Loutre — la fausse IA de positivité, pour papoter avec optimisme sans nier les difficultés.">
+  <meta name="description" content="Loutre, la fausse IA de positivité : papotage, mini-jeux et optimisme avec les pieds sur terre.">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <title>Loutre — optimisme à la loutre</title>
   <link rel="stylesheet" href="style.css">
+  <title>Loutre — le coin positif</title>
 </head>
 <body>
   <main class="app-shell">
     <header class="topbar">
-      <div class="brand">
-        <div class="brand-icon" aria-hidden="true">🦦</div>
-        <div>
-          <div class="brand-name">Loutre</div>
-          <div class="brand-subtitle"><span class="status-dot"></span> Toujours là pour vous</div>
-        </div>
-      </div>
-      <button class="new-chat" id="newChat" aria-label="Nouvelle conversation" title="Nouvelle conversation">＋</button>
+      <div class="brand"><span class="brand-icon" id="brandIcon" aria-hidden="true">🦦</span><div><div class="brand-name">Loutre</div><div class="brand-subtitle"><span class="status-dot"></span><span id="statusText">petite loutre en ligne</span></div></div></div>
+      <button class="new-chat" id="newChat" type="button" aria-label="Nouvelle conversation" title="Nouvelle conversation">＋</button>
     </header>
-
     <section class="chat" id="chat" aria-live="polite">
       <div class="welcome" id="welcome">
-        <div class="otter-art" aria-hidden="true">🦦</div>
+        <div class="otter-stage"><span class="otter-art" id="otterArt" aria-hidden="true">🦦</span><span class="sparkle sparkle-one">✦</span><span class="sparkle sparkle-two">✧</span></div>
         <p class="eyebrow">FAUSSE IA • VRAI OPTIMISME</p>
-        <h1>Bonjour.<br><span>On cherche le bon côté.</span></h1>
-        <p class="welcome-copy">Une loutre virtuelle très optimiste, prête à papoter avec toi.</p>
-        <div class="suggestions">
-          <button class="suggestion">Est-ce que tout va bien ?</button>
-          <button class="suggestion">J'ai une question importante</button>
-          <button class="suggestion">Tu es une vraie IA ?</button>
-        </div>
+        <h1>Salut, moi c'est Loutre.<br><span>On papote ?</span></h1>
+        <p class="welcome-copy">Je peux écouter, brainstormer, lancer un mini-jeu ou chercher un petit rayon de soleil — sans faire comme si tout était toujours facile.</p>
+        <div class="welcome-prompts" id="welcomePrompts" aria-label="Suggestions pour commencer"></div>
       </div>
-      <div class="messages" id="messages"></div>
+      <div class="messages" id="messages" role="log" aria-live="polite" aria-relevant="additions text"></div>
     </section>
-
+    <nav class="activity-bar" aria-label="Activités Loutre">
+      <button class="activity-button" type="button" data-action="game"><span>🎲</span> Mini-jeu</button>
+      <button class="activity-button" type="button" data-action="question"><span>💬</span> Question surprise</button>
+      <button class="activity-button" type="button" data-action="boost"><span>✨</span> Petit boost</button>
+      <button class="activity-button" type="button" data-action="topic"><span>🪁</span> Changer d'air</button>
+    </nav>
     <form class="composer" id="composer">
-      <label class="sr-only" for="prompt">Votre message</label>
-      <textarea id="prompt" rows="1" placeholder="Écrivez à Loutre…" maxlength="1200"></textarea>
-      <button class="send" type="submit" aria-label="Envoyer le message">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
-      </button>
+      <label class="sr-only" for="prompt">Ton message</label>
+      <textarea id="prompt" rows="1" placeholder="Écris comme tu parlerais à un ami…" maxlength="1600"></textarea>
+      <button class="send" type="submit" aria-label="Envoyer le message"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
     </form>
-    <p class="disclaimer">Loutre est une fausse IA de positivité : elle encourage, elle écoute et garde les pieds sur terre.</p>
+    <p class="disclaimer">Loutre est un petit programme local : elle n'envoie pas tes messages sur Internet.</p>
   </main>
+  <script src="conversations.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
-

@@ -1,209 +1,232 @@
-(() => {
+﻿(() => {
   "use strict";
+  const $ = (s, root = document) => root.querySelector(s);
+  const chat = $("#chat"), messages = $("#messages"), composer = $("#composer"), prompt = $("#prompt");
+  const welcome = $("#welcome"), welcomePrompts = $("#welcomePrompts"), otterArt = $("#otterArt"), statusText = $("#statusText");
+  if (!chat || !messages || !composer || !prompt || !window.LOUTRE_DATA) return;
 
-  const chat = document.querySelector("#chat");
-  const messages = document.querySelector("#messages");
-  const composer = document.querySelector("#composer");
-  const prompt = document.querySelector("#prompt");
-  const welcome = document.querySelector("#welcome");
-  const newChatButton = document.querySelector("#newChat");
-  if (!chat || !messages || !composer || !prompt) return;
-
-  const state = { turns: 0, previousTheme: "", recentReplies: [], conversation: [], pending: false };
-  let pendingTimer = null;
-
-  const themes = [
-    { name: "salut", pattern: /\b(bonjour|salut|coucou|hello|hey|bonsoir|yo)\b/i, replies: ["Coucou ! Bienvenue dans le coin positif de Loutre. Comment tu te sens aujourd'hui ?", "Salut ! Tu arrives avec une histoire, une question ou juste envie de papoter ?", "Bonjour ! Je suis prête à mettre un peu de soleil dans la conversation. Quoi de neuf ?", "Hey ! Choisis ton aventure : papotage, mini-jeu ou petit coup de boost ?", "Coucou ! Même les journées ordinaires ont parfois un détail sympa à dénicher. La tienne a commencé comment ?", "Bonsoir ! On fait le bilan de la journée ou on parle d'autre chose ?"] },
-    { name: "tristesse", pattern: /\b(triste|tristesse|chagrin|pleur|malheureux|malheureuse|peine|déprimé|déprimée|morose)\b/i, replies: ["Oh, je suis désolée que ce soit lourd en ce moment. Pas besoin de faire semblant : je peux t'écouter. Qu'est-ce qui pèse le plus ?", "Merci de me le dire. La tristesse a le droit d'être là ; on peut quand même chercher ce qui te ferait un tout petit peu de bien.", "Je ne vais pas te lancer un 'souris, tout va bien' magique. Je peux rester avec toi dans ce moment. Tu veux raconter ce qui s'est passé ?", "Ça a l'air difficile. On peut commencer minuscule : tu préfères être écouté·e, penser à une distraction douce, ou chercher une prochaine étape ?", "Même si tu ne vois pas encore d'issue, tu n'as pas à tout porter seul·e. Y a-t-il quelqu'un de confiance à qui tu pourrais parler aussi ?"] },
-    { name: "stress", pattern: /\b(stress|angoiss|anxi|panique|inquiet|inquiète|peur|pression|débordé|débordée)\b/i, replies: ["On va réduire le grand nuage à une petite étape. Qu'est-ce qui demande ton attention en premier ?", "Je comprends, ça peut faire beaucoup. Si ça te convient, pose les pieds au sol et prends une expiration lente. Puis on démêle une chose à la fois.", "Ton cerveau a ouvert quinze onglets ? On peut en fermer un ensemble : qu'est-ce qui est urgent, et qu'est-ce qui peut attendre ?", "Tu n'as pas besoin d'avoir un plan parfait. Quel serait le prochain pas faisable en cinq minutes ?", "Merci de me l'avoir confié. Est-ce une inquiétude pour quelque chose à venir, ou quelque chose qui s'est déjà passé ?"] },
-    { name: "confiance", pattern: /\b(nul|nulle|incapable|inutile|pas capable|doute de moi|confiance|raté|ratée|bon à rien|bonne à rien)\b/i, replies: ["Une erreur ou un doute ne résume pas toute ta personne. Qu'est-ce qui t'a fait te parler aussi durement aujourd'hui ?", "Tu peux être en apprentissage et avoir déjà de la valeur. Quel petit effort as-tu fait récemment, même imparfait ?", "Si ton ami·e disait ça de soi, tu lui répondrais quoi ? On peut essayer de t'offrir la même gentillesse.", "La confiance se construit souvent en petites preuves, pas en grand discours. Quelle mini-action serait à ta portée ?", "Je vote pour une évaluation plus juste : difficulté rencontrée, oui ; personne nulle, non. Qu'est-ce qui s'est passé ?"] },
-    { name: "école", pattern: /\b(école|collège|lycée|cours|devoir|prof|classe|examen|contrôle|étude|révision|note)\b/i, replies: ["On peut transformer la montagne de travail en petits cailloux. Quelle matière ou tâche passe en premier ?", "Une note parle d'un devoir à un moment donné, pas de tout ton potentiel. Tu veux comprendre une notion ou préparer un plan de révision ?", "Mode révisions encourageantes activé ! On peut faire un sprint de 15 minutes, une pause, puis un deuxième si tu veux. Quel sujet ?", "Si tu partages l'énoncé, je peux t'aider à le découper en étapes. On commence par ce que tu comprends déjà.", "C'est quoi le plus gros caillou : quantité, difficulté, manque de temps ou peur du résultat ?"] },
-    { name: "travail", pattern: /\b(travail|boulot|emploi|collègue|patron|bureau|carrière|réunion|stage)\b/i, replies: ["On va remettre un peu d'ordre dans le bureau mental. Qu'est-ce qui te pèse le plus au travail ?", "Tu n'as pas à résoudre toute ta carrière avant le déjeuner. Quelle décision ou tâche est la plus proche ?", "On peut écrire ensemble un message professionnel clair et cordial. À qui s'adresse-t-il et quel résultat souhaites-tu ?", "Une liste de trois priorités peut suffire pour reprendre la main. Qu'est-ce qui est vraiment urgent aujourd'hui ?", "Même une journée compliquée peut contenir une prochaine étape utile. Laquelle te semblerait réaliste ?"] },
-    { name: "fatigue", pattern: /\b(fatigué|fatiguée|épuisé|épuisée|crevé|crevée|sommeil|dormir|burn.?out)\b/i, replies: ["Le repos compte, même si la liste des choses à faire n'est pas vide. Est-ce que tu peux t'accorder une petite pause ?", "Ça ressemble à une batterie bien basse. Qu'est-ce qui pourrait être simplifié ou reporté aujourd'hui ?", "Tu n'as pas besoin de transformer chaque moment libre en moment productif. Une pause douce, ça pourrait être quoi pour toi ?", "Tu te sens surtout fatigué·e physiquement, mentalement, ou un peu des deux ?", "Si cette fatigue dure ou devient inhabituelle, en parler à un professionnel de santé serait une bonne prochaine étape. Pour maintenant, qu'est-ce qui peut attendre ?"] },
-    { name: "motivation", pattern: /\b(motivation|flemme|procrastin|pas envie|remettre à demain|commencer|bloqué|bloquée)\b/i, replies: ["On baisse la difficulté du départ : quelle version de cette tâche prendrait seulement deux minutes ?", "Pas besoin d'attendre une motivation étincelante. On peut commencer tout petit, puis décider après cinq minutes si on continue.", "Le mode 'premier pas ridicule' est activé. Ouvrir le document, sortir les chaussures, écrire un titre : tu choisis quoi ?", "Qu'est-ce qui bloque surtout : fatigue, peur de mal faire, tâche floue ou trop grosse ?", "Une action brouillonne peut être un excellent brouillon. Quel serait ton premier geste ?"] },
-    { name: "amitié", pattern: /\b(ami|amie|amitié|pote|meilleur ami|meilleure amie|copain|copine)\b/i, replies: ["Les amitiés peuvent être chouettes et compliquées à la fois. Qu'est-ce qui s'est passé entre vous ?", "Tu peux tenir à quelqu'un et avoir besoin de poser une limite. Tu veux réparer, clarifier ou simplement vider ton sac ?", "Un malentendu n'est pas toujours la fin de l'histoire. Qu'aimerais-tu que l'autre personne comprenne ?", "On peut préparer un message simple et bienveillant ensemble si tu veux.", "Qu'est-ce que tu aimerais retrouver dans cette amitié ?"] },
-    { name: "amour", pattern: /\b(amour|amoureux|amoureuse|crush|couple|petit ami|petite amie|rencard|relation)\b/i, replies: ["Les sentiments ont parfois leur propre météo ! Cette histoire te rend plutôt heureux·se, inquiet·ète, ou les deux ?", "Tu peux avancer à ton rythme et garder tes besoins dans l'équation. Qu'est-ce qui te plaît dans cette personne ?", "On peut réfléchir à une manière honnête de dire ce que tu ressens, sans exiger un résultat précis.", "Une relation chouette laisse de la place au respect, à la confiance et à la communication. Qu'est-ce que tu aimerais voir évoluer ?", "Tu veux des idées pour un message, un rendez-vous ou juste en parler ?"] },
-    { name: "famille", pattern: /\b(famille|maman|papa|parents|mère|père|frère|sœur|soeur|cousin|cousine)\b/i, replies: ["Les liens familiaux peuvent être précieux et compliqués en même temps. Qu'est-ce qui se passe ?", "Tu as le droit d'avoir un point de vue différent. Qu'aimerais-tu que ta famille comprenne ?", "On peut chercher une phrase calme pour exprimer ce que tu ressens, sans oublier tes limites.", "Tu veux parler d'un événement précis ou d'une situation qui dure ?", "Tu n'as pas à résoudre toute la situation familiale en une seule conversation. Quelle serait une petite amélioration ?"] },
-    { name: "joie", pattern: /\b(content|contente|heureux|heureuse|joie|génial|super|réussi|réussite|fier|fière|bonne nouvelle|ça va bien)\b/i, replies: ["Yesss, ça mérite un petit feu d'artifice imaginaire ! Qu'est-ce qui s'est passé ?", "Je suis ravie de célébrer ça avec toi. Quel détail te rend le plus fier·ère ?", "Une bonne nouvelle ! On prend une seconde pour la savourer : tu veux me raconter ?", "Ça fait plaisir à lire. Tu as contribué comment à ce joli résultat ?", "On ajoute cette victoire à la collection des preuves que de belles choses arrivent. Comment tu veux fêter ça ?"] },
-    { name: "ennui", pattern: /\b(ennui|ennuyé|ennuyée|je m'ennuie|rien à faire)\b/i, replies: ["Opération anti-ennui ! Tu veux un mini-jeu, une question absurde, une histoire à inventer ou une idée d'activité ?", "Défi Loutre : trouve trois objets près de toi et on leur invente une mission secrète.", "Si ta journée était un film, quel titre bizarre elle aurait ?", "On peut jouer à 'tu préfères' : vivre dans une cabane dans les arbres ou un phare au bord de la mer ?", "Je te propose une mission de 60 secondes : repérer quelque chose de joli autour de toi. Tu as trouvé quoi ?"] },
-    { name: "créativité", pattern: /\b(dessin|dessiner|écrire|musique|créatif|créative|art|inventer|histoire|idée de projet)\b/i, replies: ["Oh, terrain fertile pour les idées ! Tu veux du drôle, du doux, du mystérieux ou du complètement loufoque ?", "On peut faire une première version brouillonne, puis lui donner des paillettes. Qu'est-ce que tu imagines ?", "Donne-moi trois mots au hasard et je les transforme en début d'histoire.", "Une contrainte amusante peut débloquer l'imagination : ton personnage principal est une loutre astronaute. Que se passe-t-il ?", "Tu veux développer une idée que tu as déjà ou en chercher une nouvelle ensemble ?"] },
-    { name: "décision", pattern: /\b(décision|décider|choisir|choix|j'hésite|hésitation|je ne sais pas quoi faire)\b/i, replies: ["On peut comparer les options sans chercher la perfection. Quelles sont les possibilités ?", "Est-ce une décision réversible ? Un petit test pourrait t'apprendre quelque chose sans tout miser.", "Qu'est-ce qui compte le plus pour toi dans ce choix : temps, énergie, curiosité, sécurité ou autre chose ?", "On peut noter pour chaque option : un avantage, un coût et une prochaine étape. Tu veux essayer ?", "Tu n'as pas à décider à ma place ni à trouver la réponse parfaite. Quelle option te rend un peu curieux·se ?"] },
-    { name: "repos", pattern: /\b(repos|pause|vacances|récupérer|me détendre|relax|calme|respirer)\b/i, replies: ["Une pause n'a pas besoin d'être méritée. Qu'est-ce qui te ferait du bien : silence, musique, mouvement ou boisson chaude ?", "On peut imaginer une pause de dix minutes adaptée à ton énergie. Tu préfères dehors ou dedans ?", "Mode douceur activé : quelle obligation non essentielle pourrait attendre un peu ?", "Tu récupères mieux seul·e, avec quelqu'un, ou en faisant une activité tranquille ?", "Choisis un petit confort pour les prochaines minutes. Lequel te tente ?"] },
-    { name: "merci", pattern: /\b(merci|remercie|c'est gentil|ça m'aide|tu m'aides)\b/i, replies: ["Avec plaisir ! Je suis contente que ça t'ait été utile. On continue ou on savoure la petite avancée ?", "Merci à toi de m'avoir raconté ça. Tu peux revenir quand tu veux pour papoter.", "Toujours partante pour chercher une piste avec toi ! Quel est le prochain sujet ?", "Ça me fait plaisir d'avoir aidé. Et hop, un point positif pour notre équipe !"] },
-    { name: "animaux", pattern: /\b(animal|animaux|chien|chat|chaton|chiot|lapin|oiseau|cheval|loutre)\b/i, replies: ["Sujet d'excellence ! Quel animal te met instantanément de bonne humeur ?", "Si ton animal avait un métier, ce serait quoi ?", "Les loutres sont évidemment consultantes en câlins imaginaires. Tu as un animal préféré ?", "Inventons un animal fantastique : il a trois pouvoirs. Lesquels ?", "Tu as un souvenir drôle ou touchant avec un animal ?"] },
-    { name: "nourriture", pattern: /\b(nourriture|manger|cuisine|recette|repas|pizza|pâtes|chocolat|dessert|gâteau)\b/i, replies: ["Question capitale : quel plat pourrait améliorer une journée ordinaire ?", "On peut chercher une recette simple avec ce que tu as sous la main. Quels ingrédients ?", "Si tu inventais un restaurant, quelle serait sa spécialité et son nom ?", "Team sucré, salé, épicé ou un peu de tout ?", "Imagine un pique-nique parfait : qu'est-ce qu'on met dans le panier ?"] },
-    { name: "musique", pattern: /\b(musique|chanson|chanteur|chanteuse|album|concert|mélodie|playlist)\b/i, replies: ["Quelle chanson te donne envie de danser, même un tout petit peu ?", "Si ta journée avait une bande-son, quel genre musical jouerait ?", "Tu préfères les paroles, la mélodie ou l'ambiance générale ?", "Quel artiste aimerais-tu voir en concert ?", "On invente une playlist imaginaire pour remonter le moral : quel serait le premier morceau ?"] },
-    { name: "films", pattern: /\b(film|cinéma|acteur|actrice|réalisateur|série|épisode)\b/i, replies: ["Tu préfères les histoires qui font rire, réfléchir, frissonner ou pleurer un bon coup ?", "Quel film aimerais-tu revoir comme si c'était la première fois ?", "Si ta vie était un film aujourd'hui, quel en serait le titre ?", "Quel univers de fiction aimerais-tu visiter pendant une journée ?", "Donne-moi une ambiance et je te propose une idée de scénario loufoque."] },
-    { name: "voyage", pattern: /\b(voyage|voyager|vacances|destination|avion|train|week-end|weekend)\b/i, replies: ["Si tu pouvais partir demain, tu choisirais mer, montagne, forêt ou grande ville ?", "Tu aimes les voyages spontanés ou les itinéraires bien préparés ?", "Quel souvenir de voyage aimerais-tu créer un jour ?", "On peut rêver une escapade avec découvertes et pauses gourmandes. Où va-t-on ?", "Parfois l'aventure se cache aussi près de chez soi. Quel endroit aimerais-tu explorer ?"] },
-    { name: "nature", pattern: /\b(nature|forêt|montagne|mer|plante|jardin|randonnée|fleur|soleil|pluie|météo)\b/i, replies: ["Quel paysage te recharge le plus : forêt, mer, montagne ou jardin ?", "Si tu pouvais t'installer cinq minutes dans un paysage, lequel choisirais-tu ?", "Quel son naturel te détend : pluie, oiseaux, vagues ou vent dans les arbres ?", "On peut inventer une cabane secrète dans la nature. Qu'est-ce qu'on y trouve ?", "Une petite promenade peut parfois faire du bien si tu en as la possibilité. Tu aimes marcher où ?"] },
-    { name: "surprise", pattern: /\b(surprise|incroyable|tu sais quoi|figure-toi|devine quoi|j'ai une nouvelle)\b/i, replies: ["Oh, je suis toute ouïe ! Bonne surprise, mauvaise surprise ou entre les deux ?", "Raconte-moi le détail le plus incroyable en premier !", "Je suis prête pour la suite. Qu'est-ce qui s'est passé ?", "Tu veux commencer par le début ou par le moment le plus inattendu ?"] }
-  ];
-
-  const fallbackReplies = [
-    "Je veux bien en savoir plus. Quel détail est le plus important pour toi ?",
+  const library = window.LOUTRE_DATA;
+  const themes = library.themes;
+  const state = {
+    turns: 0, theme: null, lastQuestion: "", lastQuestionTheme: null,
+    recentReplies: [], history: [], facts: { name: "", likes: [], pets: [] },
+    pending: false, timer: null, game: null, mode: "conversation"
+  };
+  const fallback = [
+    "Je t'écoute ! Raconte-moi la suite, je suis toute ouïe.",
     "Merci de partager ça. Tu veux une écoute, des idées concrètes ou une petite distraction ?",
-    "On peut regarder cette situation sous plusieurs angles. Qu'est-ce que tu aimerais comprendre ?",
     "Je ne veux pas deviner à ta place : comment tu le vis, toi ?",
-    "Et si on cherchait une petite chose que tu peux influencer, même modestement ?",
-    "Je t'écoute. Qu'est-ce qui s'est passé juste avant ?",
-    "Tu peux me donner un exemple concret, si ça t'aide à l'expliquer.",
-    "On peut aussi changer de sujet et parler d'un truc plus léger. Qu'est-ce qui te ferait envie ?",
+    "Qu'est-ce qui te paraît le plus important là-dedans ?",
+    "Tu peux me donner un exemple concret si ça t'aide à expliquer ton idée.",
+    "On peut aussi changer de sujet et parler d'un truc plus léger, si tu préfères.",
     "Qu'aimerais-tu obtenir de notre échange : un plan, une idée, une explication ou juste papoter ?",
-    "On va faire simple : quelle est la prochaine petite étape qui te semblerait utile ?",
-    "Je suis une loutre très optimiste, mais je sais aussi écouter les vraies difficultés. Raconte-moi.",
-    "Je garde mon pompon imaginaire prêt pour célébrer les petits progrès. Qu'est-ce qui t'amène ?",
-    "Tu veux qu'on explore le problème, qu'on cherche une solution ou qu'on fasse une pause légère ?",
-    "Même une conversation sans plan peut faire du bien. Qu'est-ce qui te passe par la tête ?"
+    "Je suis une loutre très optimiste, mais j'écoute aussi les vraies difficultés.",
+    "Même une conversation sans plan peut faire du bien. Qu'est-ce qui te passe par la tête ?",
+    "Ah, je vois. Et toi, qu'est-ce que tu en penses ?",
+    "Je suis curieuse d'en savoir plus. Qu'est-ce qui s'est passé ensuite ?",
+    "Tu veux qu'on explore le problème, cherche une solution ou fasse une pause légère ?"
   ];
+  const acknowledgements = ["Ah, je vois mieux.","Merci, ça m'aide à comprendre.","D'accord, je te suis.","Je comprends un peu mieux la situation.","Merci de préciser, je garde ça en tête pour la suite.","Oh, je vois ce que tu veux dire.","Ça donne une autre couleur à l'histoire.","Je note, sans te juger."];
+  const bridges = ["Et dans tout ça,","En partant de là,","Pour la suite,","Si on regarde le prochain petit pas,","Qu'est-ce qui te semblerait aidant :","Et toi, tu aurais envie de,"];
+  const crisis = /\b(suicide|suicider|me tuer|me faire du mal|mettre fin à mes jours|ne veux plus vivre|plus envie de vivre|envie de mourir|je veux mourir|automutilation|me blesser volontairement)\b/i;
+  const identity = /\b(tu es une vraie ia|tu es une ia|es-tu une ia|qui es-tu|tu es humain|tu es humaine|tu es un robot|comment tu fonctionnes)\b/i;
+  const goodbye = /\b(au revoir|à bientôt|bonne nuit|bonne soirée|je dois y aller|à plus|ciao)\b/i;
 
-  const followUps = [
-    "Tu veux m'en dire un peu plus ?", "Qu'est-ce qui te ferait du bien maintenant ?", "Tu préfères qu'on cherche une solution ensemble ?",
-    "Quelle serait une petite amélioration possible ?", "Tu veux une réponse courte ou des idées détaillées ?", "Qu'aimerais-tu essayer ensuite ?",
-    "Qu'est-ce que tu contrôles dans cette situation ?", "On continue sur ce sujet ou on part vers quelque chose de plus léger ?",
-    "Quel serait le plus petit pas possible ?", "Qu'aimerais-tu que je comprenne mieux ?"
-  ];
-
-  const crisisPattern = /\b(suicide|me tuer|me faire du mal|mettre fin à mes jours|ne veux plus vivre|plus envie de vivre|automutilation|me blesser volontairement)\b/i;
-  const identityPattern = /\b(tu es une vraie ia|tu es une ia|es-tu une ia|qui es-tu|tu es humain|tu es humaine|tu es un robot)\b/i;
-  const identityReplies = [
-    "Je suis Loutre, une fausse IA de positivité : un programme, pas une personne. Je peux discuter, proposer des idées et mettre un peu de fantaisie dans la journée.",
-    "Je suis une loutre virtuelle programmée pour voir le verre à moitié plein — avec une paille géante. Je n'ai pas de sentiments humains, mais je peux papoter avec toi.",
-    "Bien vu : je ne suis pas une vraie loutre ni une humaine, juste un petit programme conversationnel très optimiste."
-  ];
-  const crisisReplies = [
-    "Je suis vraiment désolée que tu traverses ça. Ta sécurité passe avant la positivité : si tu risques de te faire du mal maintenant, rapproche-toi d'une personne de confiance et éloigne ce qui pourrait te blesser. En France, appelle le 3114 (gratuit, 24 h/24) ; en danger immédiat, le 15 ou le 112. Est-ce que tu es en sécurité là, tout de suite ?",
-    "Merci de me l'avoir dit. Tu ne devrais pas rester seul·e avec ça. En France, tu peux appeler le 3114 gratuitement, jour et nuit ; si le danger est immédiat, appelle le 15 ou le 112. Peux-tu contacter maintenant une personne de confiance ?"
-  ];
-
-  function normalize(text) {
-    return String(text || "").toLocaleLowerCase("fr").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  function norm(text) { return String(text || "").toLocaleLowerCase("fr").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[’‘]/g, "'"); }
+  function pick(items, avoid = []) { const free = items.filter(item => !avoid.includes(item)); const list = free.length ? free : items; return list[Math.floor(Math.random() * list.length)] || "Je t'écoute."; }
+  function findTheme(text) { const n = norm(text); return themes.find(t => t.keys.test(text) || t.keys.test(n)) || null; }
+  function remember(text) {
+    const name = text.match(/\b(?:je m'appelle|moi c'est|mon prénom c'est)\s+([\p{L}][\p{L}'-]{1,20})/iu);
+    if (name) state.facts.name = name[1];
+    const pet = text.match(/\b(?:mon|ma)\s+(?:chat|chien|lapin|animal)\s+(?:s'appelle|se nomme)\s+([\p{L}][\p{L}'-]{1,20})/iu);
+    if (pet && !state.facts.pets.includes(pet[1])) state.facts.pets.push(pet[1]);
+    const like = text.match(/\b(?:j'aime|j'adore|je préfère)\s+([^,.!?;]{2,38})/i);
+    if (like && !state.facts.likes.includes(like[1].trim())) state.facts.likes.push(like[1].trim());
   }
-  function choose(items, avoid = []) {
-    const available = items.filter(item => !avoid.includes(item));
-    const pool = available.length ? available : items;
-    return pool[Math.floor(Math.random() * pool.length)] || "Je t'écoute.";
+  function selectQuestion(theme, avoid = []) {
+    const list = theme?.qs?.length ? theme.qs : library.questions;
+    const question = pick(list, [...avoid, state.lastQuestion]);
+    state.lastQuestion = question;
+    state.lastQuestionTheme = theme?.name || null;
+    return question;
   }
-  function findTheme(text) {
-    const normalized = normalize(text);
-    return themes.find(theme => theme.pattern.test(text) || theme.pattern.test(normalized));
+  function reflect(text) {
+    const clean = text.trim().replace(/\s+/g, " ");
+    const n = norm(clean);
+    if (/^(oui|exactement|c'est ça|grave|carrément|tout à fait|plutôt oui)$/.test(n)) return pick(["D'accord, plutôt oui, je note !","Je te suis, alors.","Ah, c'est donc ça.","Ok, on part de là."]);
+    if (/^(non|pas vraiment|pas du tout|bof|aucune idée)$/.test(n)) return pick(["Compris, on ne force pas cette piste.","D'accord, merci de me le dire.","Très bien, on cherche une autre direction."]);
+    if (clean.length < 48 && !/[.!?]/.test(clean)) return pick([`Ah, équipe ${clean} alors !`,`Oh, ${clean} ! J'aime bien cette réponse.`,`Je note : ${clean}.`,`D'accord, ${clean} — ça me donne une piste.`]);
+    if (clean.length < 105) return `${pick(acknowledgements)} Tu me dis : « ${clean} ».`;
+    return pick(acknowledgements);
   }
-  function buildReply(text) {
-    if (crisisPattern.test(text) || crisisPattern.test(normalize(text))) return choose(crisisReplies, state.recentReplies);
-    if (identityPattern.test(text) || identityPattern.test(normalize(text))) return choose(identityReplies, state.recentReplies);
+  function activityOf(text) {
+    const n = norm(text);
+    if (/\b(question surprise|pose-moi une question|question du jour)\b/.test(n)) return "question";
+    if (/\b(mini-jeu|jouons|on joue|quiz|devinette)\b/.test(n)) return "game";
+    if (/\b(raconte.{0,8}une histoire|histoire à deux|inventons une histoire)\b/.test(n)) return "story";
+    if (/\b(j'ai besoin d'un boost|boost|encourage-moi|motivation)\b/.test(n)) return "boost";
+    if (/\b(changer de sujet|changeons de sujet|changer d'air|autre sujet)\b/.test(n)) return "topic";
+    return "";
+  }
+  function makeIdentity() {
+    const name = state.facts.name ? `, ${state.facts.name}` : "";
+    return pick([
+      `Je suis Loutre${name}, une fausse IA de positivité : un programme local, pas une personne. Je peux papoter, proposer des idées et inventer des jeux.`,
+      `Bien vu${name} : je ne suis pas une vraie loutre ni une humaine, juste un programme avec des phrases pré-écrites et beaucoup d'optimisme.`,
+      `Je suis une loutre virtuelle programmée pour voir le verre à moitié plein — avec une paille géante. Je n'ai pas de sentiments humains, mais je peux discuter avec toi.`
+    ], state.recentReplies);
+  }
+  function memoryReply(text) {
+    const n = norm(text);
+    if (state.facts.name && /\b(comment je m'appelle|mon prenom|tu te souviens de mon nom)\b/.test(n)) return `Tu m'as dit que tu t'appelles ${state.facts.name}. Ma mémoire de loutre est encore là !`;
+    if (state.facts.pets.length && /\b(mon animal|mon chat|mon chien|comment s'appelle mon)\b/.test(n)) return `Tu m'as parlé de ${state.facts.pets.join(" et ")}. Comment va ${state.facts.pets.length === 1 ? "ton compagnon" : "ta petite équipe"} ?`;
+    if (state.facts.likes.length && /\b(ce que j'aime|mes gouts|ce que je prefere)\b/.test(n)) return `Tu m'as dit aimer ${state.facts.likes.slice(-3).join(", ")}. J'ai bon ?`;
+    return "";
+  }
+  function getReply(text) {
+    const n = norm(text);
+    if (crisis.test(text) || crisis.test(n)) return { text:"Je suis vraiment désolée que tu traverses ça. Ta sécurité passe avant la positivité : si tu risques de te faire du mal maintenant, rapproche-toi tout de suite d'une personne de confiance et éloigne ce qui pourrait te blesser. En France, appelle le 3114 (gratuit, 24 h/24) ; en danger immédiat, le 15 ou le 112. Est-ce que tu es en sécurité là, tout de suite ?", urgent:true, actions:["Je suis en sécurité","Je suis en danger immédiat"] };
+    if (identity.test(text) || identity.test(n)) return { text:makeIdentity(), theme:null };
+    if (/^(salut|bonjour|coucou|hello|hey|bonsoir|yo|cc)\b/.test(n)) return {text:pick(["Coucou, bienvenue ! Ta journée se passe comment ?","Salut ! Tu arrives avec une histoire, une question ou envie de papoter ?","Bonjour ! On se fait une petite place confortable et on discute ?","Hey ! Quoi de neuf dans ton univers ?"],state.recentReplies),theme:null};
+    if (/^(merci|merci beaucoup)\b/.test(n)) return {text:pick(["Avec plaisir ! On continue sur ce sujet ou on part vers autre chose ?","Je suis ravie que cela ait aidé. Tu veux poursuivre ?","Toujours partante pour papoter avec toi !"],state.recentReplies),theme:state.theme};
+    if (goodbye.test(n)) return { text:pick(["À bientôt ! Merci pour ce bout de conversation. Prends soin de toi, à ton rythme.","Bonne suite de journée ! Mon pompon de loutre sera prêt pour la prochaine fois.","Bonne nuit ! Je te souhaite un repos doux comme une pierre au soleil.","À plus ! Tu peux revenir papoter quand tu en as envie."],state.recentReplies), theme:state.theme };
+    const remembered = memoryReply(text); if (remembered) return {text:remembered,theme:state.theme};
 
+    const action = activityOf(text);
+    if (state.game && !action) {
+      const answer=text.trim().replace(/\s+/g," ");
+      if(state.game==="Histoire à deux") return {text:pick([`Oh, et juste derrière, il y a ${answer.length<48?answer:"un indice mystérieux"} ! La loutre s'approche… qu'est-ce qui arrive ensuite ?`,`J'adore cette direction ! La loutre regarde autour d'elle et découvre un détail inattendu. Lequel ?`,`La suite devient de plus en plus intrigante. Un nouvel ami apparaît : qui est-ce ?`]),game:true,theme:findTheme("histoire")};
+      if(state.game==="Le mot mystère") return {text:pick(["Hmm… je tente ma chance : une clé ?", "Mon pari de loutre : une tasse ?", "Est-ce que ce serait un livre ?", "Je propose… une chaussette orpheline ?"]) + " J'ai bon, ou tu me donnes un indice plus farfelu ?",game:true};
+      if(state.game==="Trois mots") return {text:`Avec « ${answer.length<75?answer:"tes mots mystérieux"} », je propose comme titre : Le grand mystère du mardi ! Quel serait le genre du film ?`,game:true};
+      return {text:`${pick(["J'aime bien ta réponse !", "Très bon choix !", "Ça, c'est une idée qui a du panache.", "Je n'avais pas pensé à ça, bien joué !", "Réponse validée par le comité des loutres curieuses."])} ${answer.length<55?`« ${answer} » me fait sourire. `:""}Tu veux ajouter un détail ou on passe au défi suivant ?`,game:true};
+    }
+    if (action === "game") { const game = pick(library.games, state.game ? [state.game] : []); state.game = game.name; state.mode="jeu"; return {text:`🎲 ${game.name}\n\n${game.text}`,theme:findTheme("jeu"),game:true}; }
+    if (action === "story") { state.game="Histoire à deux"; return {text:"📖 Histoire à deux : une loutre découvre une porte minuscule au pied d'un vieux chêne. Derrière, elle entend une musique de fête… Qu'est-ce qu'elle voit en entrant ?",theme:findTheme("histoire"),game:true}; }
+    if (action === "question") return {text:`${pick(library.openers)} ${selectQuestion(null)}`,question:true};
+    if (action === "boost") return {text:`${pick(library.boosts)}\n\n${selectQuestion(state.theme)}`,theme:state.theme,question:true};
+    if (action === "topic") { state.game=null; const next=pick(themes.filter(t=>t!==state.theme)); state.theme=next; return {text:`Allez, on change de décor ! 🪁\n\n${pick(next.replies)}\n\n${selectQuestion(next)}`,theme:next,question:true}; }
+
+    if (/\b(juste écoute|écoute-moi|pas de conseil|besoin de parler|vider mon sac)\b/i.test(text)) state.mode="écoute";
+    else if (/\b(des idées|brainstorm|trouver une solution|plan concret|aide-moi à)\b/i.test(text)) state.mode="idées";
+    else if (/\bconversation|papoter|discuter\b/i.test(text)) state.mode="conversation";
     const theme = findTheme(text);
-    const isAnswer = state.conversation.length >= 2 && state.conversation.at(-2)?.role === "bot";
+    const wasQuestion = Boolean(state.lastQuestion) && state.history.length >= 2 && state.history.at(-2)?.role === "bot";
+    const selected = theme || (wasQuestion ? themes.find(t=>t.name===state.lastQuestionTheme) : null) || state.theme;
+    if (/\b(et toi|toi aussi|comment vas-tu|comment tu vas|tu aimes quoi)\b/.test(n)) return {text:`Bonne question${state.facts.name ? `, ${state.facts.name}` : ""} ! Je n'ai pas de journée à moi, mais j'adore les conversations pleines d'idées. Et toi, plutôt papotage sérieux ou détour absurde ?`,theme:selected,question:true};
+
     let reply;
-
-    if (isAnswer && state.previousTheme && state.previousTheme === theme?.name) {
-      reply = choose(theme.replies, state.recentReplies);
-    } else if (theme) {
-      reply = choose(theme.replies, state.recentReplies);
-      state.previousTheme = theme.name;
+    if (wasQuestion && !theme) {
+      const answer = reflect(text);
+      const q = selectQuestion(selected, [state.lastQuestion]);
+      if (state.mode === "écoute") reply = `${answer} Je t'écoute, prends ton temps. ${q}`;
+      else reply = Math.random()<.6 ? `${answer} ${pick(bridges)} ${q.charAt(0).toLowerCase()}${q.slice(1)}` : `${answer} ${q}`;
     } else {
-      reply = choose(fallbackReplies, state.recentReplies);
-      state.previousTheme = "";
+      const found = theme || selected;
+      if (!found) { reply=pick(fallback,state.recentReplies); if (Math.random()<.45) reply+=`\n\n${selectQuestion(null)}`; }
+      else {
+        state.theme=found;
+        let base=pick(found.replies,state.recentReplies);
+        if (state.mode==="écoute" && Math.random()<.5) base=`${pick(["Je suis là, je t'écoute.","Merci de me le confier.","Je ne vais pas essayer de régler ça trop vite."])} ${base}`;
+        if (state.mode==="idées" && Math.random()<.5) base+= " On peut chercher une piste concrète ensemble.";
+        if (!/[?？]/.test(base) && Math.random()<.78) base+=`\n\n${selectQuestion(found)}`;
+        reply=base;
+      }
     }
-
-    // Les réponses restent courtes : une relance seulement, pour éviter l'effet catalogue.
-    if (state.turns > 1 && !/[?？]$/.test(reply) && Math.random() < 0.28) {
-      reply += "\n\n" + choose(followUps, state.recentReplies);
-    }
-    return reply;
+    if (state.facts.name && state.turns>2 && Math.random()<.1 && !reply.includes(state.facts.name)) reply=`${state.facts.name}, ${reply.charAt(0).toLowerCase()}${reply.slice(1)}`;
+    return {text:reply,theme:selected||state.theme,question:/\?/.test(reply)};
   }
 
-  function addMessage(role, text) {
-    const wrapper = document.createElement("div");
-    wrapper.className = "message " + role;
-    const label = document.createElement("span");
-    label.className = "message-label";
-    label.textContent = role === "user" ? "Vous" : "Loutre";
-    const bubble = document.createElement("div");
-    bubble.className = "bubble";
-    bubble.textContent = text;
-    wrapper.append(label, bubble);
-    messages.appendChild(wrapper);
-    chat.scrollTop = chat.scrollHeight;
-    return wrapper;
+  function setMood(mood="curious") {
+    const moods={curious:["🦦","petite loutre en ligne"],happy:["🦦✨","en mode célébration"],listening:["🦦💚","en mode écoute"],playful:["🦦🎲","prête à jouer"],cozy:["🦦☁️","ambiance douce"]};
+    const item=moods[mood]||moods.curious;
+    const icon=$("#brandIcon"); if(icon) icon.textContent=item[0];
+    if(otterArt) otterArt.textContent=item[0]; if(statusText) statusText.textContent=item[1];
+    document.body.dataset.mood=mood;
   }
-
+  function addMessage(role,text,options={}) {
+    const wrap=document.createElement("article");
+    wrap.className=`message ${role}${options.highlight?" highlight":""}${options.typing?" typing":""}`;
+    const label=document.createElement("span"); label.className="message-label";
+    label.textContent=role==="user"?(state.facts.name||"Toi"):"Loutre";
+    const bubble=document.createElement("div"); bubble.className="bubble"; bubble.textContent=text;
+    wrap.append(label,bubble);
+    if(role==="bot"&&!options.typing&&!options.urgent&&options.tools!==false) {
+      const tools=document.createElement("div"); tools.className="message-tools";
+      [["↪ Continuer","continue"],["🎲 Mini-jeu","game"],["🪁 Autre sujet","topic"]].forEach(([title,action])=>{
+        const b=document.createElement("button"); b.type="button"; b.className="quick-reply"; b.textContent=title; b.dataset.action=action; tools.appendChild(b);
+      });
+      wrap.appendChild(tools);
+    }
+    messages.appendChild(wrap); chat.scrollTop=chat.scrollHeight; return wrap;
+  }
+  function renderStarters() {
+    const target=welcomePrompts; if(!target)return; target.replaceChildren();
+    const pool=["Pose-moi une question surprise","J'ai eu une journée bizarre","Je veux faire un mini-jeu","Raconte-moi une histoire","Je voudrais un petit boost","Parlons d'un sujet léger","J'ai une bonne nouvelle","Je ne sais pas quoi dire"];
+    const chosen=[]; while(chosen.length<4) chosen.push(pick(pool,chosen));
+    chosen.forEach(text=>{const b=document.createElement("button");b.type="button";b.className="suggestion";b.textContent=text;b.addEventListener("click",()=>sendMessage(text));target.appendChild(b);});
+  }
+  function performAction(action) {
+    if(state.pending)return;
+    if(welcome)welcome.hidden=true;
+    let text="";
+    if(action==="game") {const g=pick(library.games,state.game?[state.game]:[]);state.game=g.name;text=`🎲 ${g.name}\n\n${g.text}`;setMood("playful");}
+    else if(action==="question") {text=`${pick(library.openers)} ${selectQuestion(state.theme)}`;setMood("curious");}
+    else if(action==="boost") {text=`${pick(library.boosts)}\n\n${selectQuestion(state.theme)}`;setMood("happy");}
+    else if(action==="topic") {state.game=null;const t=pick(themes.filter(item=>item!==state.theme));state.theme=t;text=`On change d'air ! 🪁\n\n${pick(t.replies)}\n\n${selectQuestion(t)}`;setMood("curious");}
+    else if(action==="continue") {text=`${pick(acknowledgements)} ${selectQuestion(state.theme)}`;setMood("listening");}
+    if(!text)return;
+    addMessage("bot",text,{highlight:action==="game"||action==="boost"});
+    state.history.push({role:"bot",text,time:Date.now()});const qs=text.match(/[^?]*\?/g);state.lastQuestion=qs?qs[qs.length-1].trim():"";state.lastQuestionTheme=state.lastQuestion?(state.theme?.name||null):null;
+    state.recentReplies.push(text);state.turns++;
+  }
   function sendMessage(value) {
-    const text = String(value || "").trim();
-    if (!text || state.pending) return;
-    if (text.length > 1200) {
-      addMessage("bot", "Ouh, quel grand message ! Peux-tu le partager en deux parties pour que je le lise bien ?");
-      return;
-    }
-
-    if (welcome) welcome.hidden = true;
-    addMessage("user", text);
-    state.conversation.push({ role: "user", text, time: Date.now() });
-    state.turns += 1;
-    prompt.value = "";
-    prompt.style.height = "auto";
-    state.pending = true;
-    const typing = addMessage("bot", "Loutre réfléchit…");
-    typing.setAttribute("aria-label", "Loutre réfléchit");
-    typing.classList.add("typing");
-    const delay = Math.min(850, Math.max(250, text.length * 5));
-
-    pendingTimer = window.setTimeout(() => {
-      pendingTimer = null;
-      typing.remove();
-      const reply = buildReply(text);
-      state.recentReplies.push(reply);
-      if (state.recentReplies.length > 14) state.recentReplies.shift();
-      state.conversation.push({ role: "bot", text: reply, time: Date.now() });
-      addMessage("bot", reply);
-      state.pending = false;
-      prompt.focus();
-    }, delay);
+    const text=String(value||"").trim(); if(!text||state.pending)return;
+    if(text.length>1600){addMessage("bot","Ouh, quel grand message ! Partage-le en deux ou trois morceaux et je le lirai avec attention.");return;}
+    if(welcome)welcome.hidden=true;
+    remember(text); state.history.push({role:"user",text,time:Date.now()}); state.turns++;
+    addMessage("user",text); prompt.value=""; prompt.style.height="auto";
+    state.pending=true; setMood("listening");
+    const typing=addMessage("bot","Loutre réfléchit",{typing:true,tools:false});
+    const dots=document.createElement("span");dots.className="typing-dots";typing.querySelector(".bubble").appendChild(dots);
+    const delay=Math.min(1100,Math.max(350,text.length*6+120));
+    state.timer=window.setTimeout(()=>{
+      state.timer=null;typing.remove();const result=getReply(text);
+      state.recentReplies.push(result.text);if(state.recentReplies.length>20)state.recentReplies.shift();
+      if(result.theme)state.theme=result.theme;
+      if(result.urgent)setMood("listening");
+      else if(result.game)setMood("playful");
+      else if(/\b(joie|bonne nouvelle|fier|fière|génial|content|contente)\b/i.test(text))setMood("happy");
+      else if(result.theme?.name==="repos"||result.theme?.name==="tristesse")setMood("cozy");else setMood("curious");
+      addMessage("bot",result.text,{highlight:result.game||result.urgent,urgent:result.urgent});
+      state.history.push({role:"bot",text:result.text,time:Date.now()});const qs=result.text.match(/[^?]*\?/g);state.lastQuestion=qs?qs[qs.length-1].trim():"";state.lastQuestionTheme=state.lastQuestion?(result.theme?.name||null):null;state.pending=false;prompt.focus();
+    },delay);
   }
 
-  composer.addEventListener("submit", event => { event.preventDefault(); sendMessage(prompt.value); });
-  prompt.addEventListener("keydown", event => {
-    if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); sendMessage(prompt.value); }
-  });
-  prompt.addEventListener("input", () => {
-    prompt.style.height = "auto";
-    prompt.style.height = Math.min(prompt.scrollHeight, 150) + "px";
-  });
-  document.querySelectorAll(".suggestion").forEach(button => button.addEventListener("click", () => sendMessage(button.textContent)));
-
-  if (newChatButton) newChatButton.addEventListener("click", () => {
-    if (pendingTimer !== null) window.clearTimeout(pendingTimer);
-    pendingTimer = null;
-    messages.replaceChildren();
-    Object.assign(state, { turns: 0, previousTheme: "", recentReplies: [], conversation: [], pending: false });
-    if (welcome) welcome.hidden = false;
-    prompt.value = "";
-    prompt.style.height = "auto";
-    prompt.focus();
+  composer.addEventListener("submit",event=>{event.preventDefault();sendMessage(prompt.value);});
+  prompt.addEventListener("keydown",event=>{if(event.key==="Enter"&&!event.shiftKey){event.preventDefault();sendMessage(prompt.value);}});
+  prompt.addEventListener("input",()=>{prompt.style.height="auto";prompt.style.height=Math.min(prompt.scrollHeight,150)+"px";if(prompt.value.trim())setMood("listening");});
+  document.querySelectorAll(".activity-button").forEach(button=>button.addEventListener("click",()=>performAction(button.dataset.action)));
+  messages.addEventListener("click",event=>{const button=event.target.closest("button[data-action]");if(button)performAction(button.dataset.action);});
+  const newChat=$("#newChat");
+  if(newChat)newChat.addEventListener("click",()=>{
+    if(state.timer!==null)window.clearTimeout(state.timer);
+    Object.assign(state,{turns:0,theme:null,lastQuestion:"",lastQuestionTheme:null,recentReplies:[],history:[],facts:{name:"",likes:[],pets:[]},pending:false,timer:null,game:null,mode:"conversation"});
+    messages.replaceChildren();if(welcome)welcome.hidden=false;prompt.value="";prompt.style.height="auto";setMood("curious");renderStarters();prompt.focus();
   });
 
-  const boostButton = document.createElement("button");
-  boostButton.type = "button";
-  boostButton.className = "suggestion boost-button";
-  boostButton.textContent = "✨ J'ai besoin d'un boost";
-  boostButton.addEventListener("click", () => sendMessage("J'ai besoin d'un petit boost de motivation."));
-  const parent = composer.parentElement;
-  if (parent) {
-    const wrapper = document.createElement("div");
-    wrapper.className = "boost-wrap";
-    wrapper.appendChild(boostButton);
-    parent.insertBefore(wrapper, composer);
-  }
-
-  if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
-    window.addEventListener("load", async () => {
-      try {
-        const registration = await navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" });
-        await registration.update();
-      } catch (error) { console.warn("Loutre : mise à jour du cache indisponible.", error); }
-    });
-  }
-
-  console.info("Loutre est prête ! Thèmes disponibles :", themes.length);
+  renderStarters();
+  if("serviceWorker" in navigator&&location.protocol.startsWith("http"))window.addEventListener("load",async()=>{
+    try{const registration=await navigator.serviceWorker.register("./sw.js",{updateViaCache:"none"});await registration.update();}
+    catch(error){console.warn("Loutre : mise à jour du cache indisponible.",error);}
+  });
+  console.info(`Loutre est prête : ${themes.length} thèmes, ${library.questions.length} questions et ${library.games.length} mini-jeux.`);
 })();
+
+
+
+
+
+
+
 
 
