@@ -1,5 +1,5 @@
 
-const CACHE = "loutre-v4";
+const CACHE = "loutre-v5";
 const FILES = [
   "./",
   "./index.html",
