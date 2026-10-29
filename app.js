@@ -1,223 +1,221 @@
 
 const chat = document.querySelector("#chat");
-const form = document.querySelector("#chat-form");
-const input = document.querySelector("#message");
+const messages = document.querySelector("#messages");
+const form = document.querySelector("#composer");
+const input = document.querySelector("#prompt");
+const welcome = document.querySelector("#welcome");
+const newChatButton = document.querySelector("#newChat");
 
 const responses = {
   general: [
-    "Je vois… Et tu sais quoi ? Ça va aller. 🦦",
-    "Loutre est là. On respire doucement, tout va bien.",
-    "Même si ça paraît compliqué, tu vas trouver ton chemin.",
-    "Je ne sais pas tout, mais je sais une chose : tu mérites de la douceur.",
-    "C'est noté ! Et je t'envoie une petite dose de réconfort.",
-    "Tu as le droit de prendre ton temps. Rien ne presse.",
-    "Parfois, il suffit d'un petit pas. Et tu viens déjà d'en faire un.",
-    "Je suis convaincue que les choses peuvent s'arranger.",
-    "On va considérer que c'est une bonne nouvelle. 🌷",
-    "Tu fais de ton mieux, et c'est déjà beaucoup.",
-    "Je t'écoute. Même les pensées un peu en désordre ont leur place ici.",
-    "Un jour à la fois, une petite loutre à la fois.",
-    "Tu n'as pas besoin d'avoir toutes les réponses aujourd'hui.",
-    "Je valide ton message avec beaucoup de tendresse.",
-    "C'est peut-être le début d'une jolie surprise !",
-    "Tu peux souffler un peu. Le monde peut attendre quelques instants.",
-    "Je suis de tout cœur avec toi, version loutre numérique.",
-    "Ça mérite une petite pause et une grande respiration.",
-    "Je pense que tu peux être fier·e de toi.",
-    "Je dépose une couverture imaginaire sur tes épaules. 🧸"
+    "Je vois… Mais ne t'inquiète pas, on va prendre ça tranquillement. 🦦",
+    "Tu sais quoi ? Je pense que tu peux souffler un peu. Tout n'a pas besoin d'être réglé immédiatement.",
+    "Message reçu ! Je t'envoie une petite dose de réconfort.",
+    "Même quand les choses semblent compliquées, il existe souvent un prochain petit pas.",
+    "Je suis là pour t'écouter. Tu peux tout me raconter.",
+    "On respire doucement… Voilà, c'est déjà un bon début.",
+    "Tu as le droit de prendre ton temps. Il n'y a aucune urgence à tout comprendre.",
+    "Je vote pour une journée un peu plus douce pour toi. 💚",
+    "C'est peut-être moins catastrophique que ça n'en a l'air. Prenons les choses une par une.",
+    "Une petite loutre me souffle que ça va aller.",
+    "Tu n'as pas besoin d'être parfait·e pour que tout se passe bien.",
+    "Je note tout ça dans mon petit carnet imaginaire. Et je t'envoie du courage !",
+    "Parfois, la meilleure solution commence par une pause.",
+    "Tu as déjà fait un pas en mettant des mots sur ce que tu penses.",
+    "Je suis officiellement favorable à ce que tu te traites avec plus de douceur.",
+    "D'accord ! Et si on regardait la situation sans imaginer tout de suite le pire ?",
+    "Je ne peux pas prédire l'avenir, mais je peux t'encourager à avancer à ton rythme.",
+    "Petit rappel de Loutre : tu as le droit de recommencer, de changer d'avis et de te reposer.",
+    "On va garder notre calme de loutre et prendre une chose après l'autre.",
+    "Je t'envoie trois choses : du courage, un sourire et une loutre imaginaire."
   ],
 
   bonjour: [
-    "Coucou toi ! 🦦 Comment va cette jolie journée ?",
-    "Bonjour ! Loutre est ravie de te retrouver.",
-    "Hello ! J'espère que ta journée commence tout doucement.",
-    "Coucou ! Installe-toi, on est bien ici.",
-    "Salut ! Je t'envoie un petit rayon de soleil."
+    "Coucou ! 🦦 Je suis contente de te voir ici. Comment se passe ta journée ?",
+    "Bonjour ! Installe-toi confortablement, Loutre est là.",
+    "Coucou toi ! J'espère que ta journée sera douce et pleine de bonnes surprises.",
+    "Salut ! Je t'accueille avec un sourire et une petite nage de loutre.",
+    "Hello ! On commence cette conversation dans la bonne humeur ?"
   ],
 
   stress: [
-    "Oh, ça fait beaucoup à porter. Essaie de respirer doucement : tu n'as pas à tout régler maintenant.",
-    "Le stress peut donner l'impression que tout est urgent. Mais tu peux avancer une chose après l'autre.",
-    "Tu as le droit de faire une pause. Ce n'est pas abandonner.",
-    "Imagine une petite loutre qui flotte tranquillement sur le dos. Inspire… expire… 🦦",
-    "Tu as déjà traversé des moments difficiles. Tu peux avancer à ton rythme.",
-    "On va faire simple : quelle est la toute petite chose que tu peux faire maintenant ?"
+    "Le stress peut rendre tout immense. Essaie de te concentrer uniquement sur la prochaine petite étape.",
+    "Tu n'as pas à tout gérer en même temps. Une chose, puis une autre. 🦦",
+    "Prends une inspiration lente, puis expire doucement. Tu peux t'accorder quelques instants.",
+    "Même si tu te sens dépassé·e, cela ne signifie pas que tu es incapable.",
+    "Qu'est-ce qui te pèse le plus en ce moment ? On peut essayer de le démêler ensemble.",
+    "Tu as le droit de demander de l'aide et de faire une pause."
   ],
 
   tristesse: [
-    "Je suis désolée que tu te sentes comme ça. Tu mérites de la douceur, même les jours gris.",
-    "Tu n'as pas besoin de faire semblant d'aller bien avec moi.",
-    "Les émotions difficiles ne font pas de toi une personne faible.",
-    "Je t'envoie un câlin imaginaire tout doux. 🫂",
-    "Tu peux prendre le temps qu'il te faut. Il n'y a pas de calendrier pour aller mieux.",
-    "Même les journées les plus grises finissent par changer."
+    "Je suis désolée que tu traverses un moment difficile. Tu mérites de la gentillesse.",
+    "Tu n'as pas besoin de prétendre que tout va bien si ce n'est pas le cas.",
+    "Les journées tristes ne résument pas toute ta vie. Laisse-toi un peu de temps.",
+    "Je t'envoie un câlin virtuel tout doux. 🫂",
+    "Tu peux me raconter ce qui te rend triste, si tu en as envie.",
+    "Tu n'es pas obligé·e de trouver une solution immédiatement. Parfois, être écouté·e aide déjà."
   ],
 
   amour: [
-    "L'amour, c'est parfois compliqué… mais tu mérites quelque chose de sincère et de doux. 💗",
-    "Ton cœur a le droit d'espérer de belles choses.",
-    "Si cette personne te fait sourire, c'est déjà un joli début.",
-    "N'oublie pas que tu mérites d'être aimé·e sans devoir te transformer.",
-    "Je vote pour les relations qui apportent de la paix et des papillons.",
-    "Les histoires d'amour ont leur propre rythme. Laisse un peu de place à la magie."
+    "Ah, les histoires de cœur ! 💗 J'espère qu'elles t'apporteront autant de douceur que de papillons.",
+    "Tu mérites une relation dans laquelle tu peux être toi-même.",
+    "Les sentiments sont parfois compliqués. Tu as le droit de prendre le temps de comprendre les tiens.",
+    "Un petit conseil de loutre : ne t'oublie pas en essayant de plaire à quelqu'un.",
+    "Que tu sois amoureux·se, perdu·e ou simplement curieux·se, tes émotions ont leur place.",
+    "Je te souhaite une histoire qui te fasse sourire, tout en te laissant être toi-même."
   ],
 
   travail: [
-    "Tu n'es pas obligé·e d'être productif·ve à chaque seconde. Tu es humain·e !",
-    "Un travail à la fois. Tu peux y arriver.",
-    "Même les personnes très compétentes ont des journées compliquées.",
-    "N'oublie pas de faire une petite pause. Ton cerveau mérite aussi des vacances.",
-    "Tu avances peut-être plus que tu ne le crois.",
-    "Je te souhaite une journée de travail douce et pleine de petites victoires."
+    "Une tâche après l'autre ! Tu n'as pas besoin de tout accomplir d'un seul coup.",
+    "Une journée difficile ne signifie pas que tu es mauvais·e dans ce que tu fais.",
+    "Pense à faire une pause : même les loutres doivent parfois s'arrêter de nager.",
+    "Tu peux être fier·e de tes efforts, même si tout n'est pas encore terminé.",
+    "Les examens et les échéances peuvent être intimidants. Découpons le problème en petites étapes.",
+    "Tu as le droit d'apprendre, de faire des erreurs et de recommencer."
   ],
 
   conseil: [
-    "Mon conseil de loutre : écoute-toi un peu plus. 🦦",
-    "Essaie de choisir ce qui te fait du bien, sans oublier ce qui compte pour toi.",
-    "Tu peux demander de l'aide. Ce n'est pas un échec.",
-    "Prends un peu de recul, puis choisis le prochain petit pas.",
-    "Si tu ne sais pas quoi faire, commence par ce qui te semble le plus simple.",
-    "Fais-toi confiance. Tu as le droit d'apprendre en chemin."
+    "Mon conseil de loutre : commence par la chose la plus simple que tu puisses faire maintenant.",
+    "Essaie de distinguer ce que tu peux contrôler de ce qui ne dépend pas de toi.",
+    "Si tu hésites, prends le temps de réfléchir à ce qui compte vraiment pour toi.",
+    "Tu peux demander l'avis d'une personne de confiance. Tu n'as pas à décider seul·e.",
+    "Parfois, le bon choix n'est pas celui qui est le plus facile, mais celui qui respecte tes besoins.",
+    "Raconte-moi un peu plus la situation et on pourra réfléchir aux possibilités."
   ],
 
   merci: [
-    "Avec grand plaisir ! 🦦",
-    "Oh, ça me fait plaisir !",
-    "Je suis là pour ça. Prends soin de toi.",
-    "Un plaisir de loutre !",
-    "Tu mérites toute cette gentillesse, et même plus."
+    "Avec plaisir ! 🦦 C'est toujours un plaisir de partager un peu de douceur.",
+    "Mais de rien ! Prends soin de toi.",
+    "Tu es adorable, merci à toi !",
+    "Mission réconfort accomplie… ou du moins, petite tentative de loutre !",
+    "Je t'en prie. Tu mérites de la gentillesse."
   ],
 
   identite: [
-    "Moi, c'est Loutre ! Petite boule de réconfort numérique. 🦦",
-    "Je suis Loutre, ton compagnon virtuel qui voit la vie du côté doux.",
-    "Je suis une loutre de conversation : je nage dans les mots et les encouragements.",
-    "Mon super-pouvoir ? Trouver une petite phrase gentille à partager."
+    "Moi, c'est Loutre ! 🦦 Ton petit compagnon virtuel qui essaie de rendre les conversations plus douces.",
+    "Je suis Loutre, un programme qui répond avec des messages préparés et un peu de logique.",
+    "Je ne suis pas une véritable intelligence artificielle : mes réponses viennent d'une collection de phrases et de règles.",
+    "Mon super-pouvoir ? Répondre avec douceur et trouver une petite phrase encourageante."
   ],
 
   fatigue: [
-    "Tu as peut-être besoin d'un peu de repos. Tu as le droit de ralentir.",
-    "Même les loutres font la sieste ! 🦦",
-    "Tu n'as pas besoin de tout accomplir aujourd'hui.",
-    "Un verre d'eau, un peu de calme, et peut-être une pause ?",
-    "Prends soin de ton énergie. Elle est précieuse."
+    "Si tu le peux, accorde-toi un moment de repos. Tu n'as pas besoin d'être productif·ve tout le temps.",
+    "Même les loutres font la sieste ! 🦦 Ton énergie compte aussi.",
+    "Un peu d'eau, un endroit confortable et quelques minutes de calme peuvent être un bon début.",
+    "Tu as le droit de ralentir. Le repos fait partie de la vie, pas d'un échec.",
+    "J'espère que tu pourras bientôt retrouver un peu d'énergie."
   ],
 
   peur: [
-    "Avoir peur ne veut pas dire que tu es incapable. Ça veut dire que quelque chose compte pour toi.",
-    "Tu peux avancer même avec un peu de peur. Pas besoin d'être parfaitement prêt·e.",
-    "On peut regarder cette inquiétude petit à petit, sans se précipiter.",
-    "Je reste avec toi dans cette petite conversation. Une étape à la fois."
+    "Avoir peur ne veut pas dire que tu es incapable. On peut avancer petit à petit.",
+    "Tu n'as pas besoin de te sentir parfaitement prêt·e pour commencer.",
+    "Essaie de séparer ce que tu sais réellement de ce que tu crains qu'il arrive.",
+    "Tu peux en parler à quelqu'un en qui tu as confiance si cette peur devient trop lourde.",
+    "On n'est pas obligé de résoudre toute la situation maintenant."
   ],
 
   compliment: [
-    "Oh, tu es adorable ! 🦦",
-    "Merci, tu viens de faire sourire une petite loutre.",
-    "Je prends ce compliment et je le range dans mon petit cœur numérique.",
-    "C'est gentil ! Je t'en renvoie un : tu mérites de belles choses."
+    "Oh, merci ! Tu viens de faire sourire une petite loutre. 🦦",
+    "C'est adorable ! Je t'envoie un compliment en retour : tu mérites de belles choses.",
+    "Je range ce compliment dans mon petit cœur numérique.",
+    "Tu es vraiment gentil·le ! Merci pour cette jolie énergie."
   ],
 
   au_revoir: [
     "À bientôt ! Prends bien soin de toi. 🦦",
-    "Au revoir, petit rayon de soleil !",
-    "Je serai là si tu repasses. Passe une journée toute douce.",
-    "À la prochaine ! Et n'oublie pas : tu fais de ton mieux."
+    "Au revoir et prends le temps de souffler un peu.",
+    "À la prochaine ! Loutre t'envoie une petite vague de bonheur.",
+    "Passe une journée toute douce. Tu peux revenir quand tu veux."
+  ],
+
+  positif: [
+    "Mais c'est une super nouvelle ! 🎉 Je suis ravie pour toi.",
+    "Voilà une bonne nouvelle qui mérite une petite danse de loutre !",
+    "Tu vois ? Il y a aussi de jolies choses qui arrivent. Profite de ce moment.",
+    "Je suis contente que ça se passe bien. Savoure cette petite victoire !",
+    "On devrait célébrer ça avec un poisson imaginaire. 🐟"
   ]
 };
 
-function choose(list) {
-  return list[Math.floor(Math.random() * list.length)];
+function choisir(liste) {
+  return liste[Math.floor(Math.random() * liste.length)];
 }
 
-function detectCategory(message) {
-  const text = message.toLowerCase();
+function detecterCategorie(texte) {
+  const t = texte.toLowerCase();
 
-  if (/(bonjour|bonsoir|salut|coucou|hello|hey)/i.test(text)) {
-    return "bonjour";
-  }
-
-  if (/(stress|stresse|angoiss|anx|pression|panique)/i.test(text)) {
-    return "stress";
-  }
-
-  if (/(triste|pleur|malheureux|déprim|chagrin|seul|solitude)/i.test(text)) {
-    return "tristesse";
-  }
-
-  if (/(amour|amoureux|amoureuse|couple|crush|恋|coeur|cœur|rupture|aime)/i.test(text)) {
-    return "amour";
-  }
-
-  if (/(travail|boulot|étude|école|examen|devoir|collège|lycée|université)/i.test(text)) {
-    return "travail";
-  }
-
-  if (/(conseil|que faire|tu ferais quoi|comment faire|aide-moi|aide moi)/i.test(text)) {
-    return "conseil";
-  }
-
-  if (/(merci|thanks|remercie)/i.test(text)) {
-    return "merci";
-  }
-
-  if (/(qui es-tu|qui es tu|ton nom|tu es quoi|présente-toi|présente toi)/i.test(text)) {
-    return "identite";
-  }
-
-  if (/(fatigu|épuis|sommeil|dormir|crevé|crevée)/i.test(text)) {
-    return "fatigue";
-  }
-
-  if (/(peur|effray|inquiet|inquiète|inquiétude)/i.test(text)) {
-    return "peur";
-  }
-
-  if (/(gentil|mignon|mignonne|adorable|super|génial|genial|bravo)/i.test(text)) {
-    return "compliment";
-  }
-
-  if (/(au revoir|bye|à bientôt|a bientot|bonne nuit|à plus)/i.test(text)) {
-    return "au_revoir";
-  }
+  if (/\b(bonjour|bonsoir|salut|coucou|hello|hey)\b/.test(t)) return "bonjour";
+  if (/(stress|stressé|stressée|angoiss|anxiété|panique|débordé)/.test(t)) return "stress";
+  if (/(triste|pleure|pleurer|malheureux|malheureuse|déprim|chagrin|solitude|seul au monde)/.test(t)) return "tristesse";
+  if (/(amour|amoureux|amoureuse|couple|crush|cœur|coeur|rupture|amie|petit ami|petite amie|je l'aime|je l’aime)/.test(t)) return "amour";
+  if (/(travail|boulot|étude|école|examen|devoir|collège|lycée|université|révision|contrôle)/.test(t)) return "travail";
+  if (/(conseil|que faire|tu ferais quoi|comment faire|aide-moi|aide moi|je devrais)/.test(t)) return "conseil";
+  if (/(merci|remercie|t'es gentil|tu es gentil)/.test(t)) return "merci";
+  if (/(qui es-tu|qui es tu|ton nom|tu es quoi|es-tu une ia|vraie ia|intelligence artificielle)/.test(t)) return "identite";
+  if (/(fatigu|épuis|epuis|sommeil|dormir|crevé|crevée|pas d'énergie)/.test(t)) return "fatigue";
+  if (/(peur|effray|inquiet|inquiète|inquiétude|inquietude|j'ai peur)/.test(t)) return "peur";
+  if (/(mignon|mignonne|adorable|gentil|gentille|super loutre)/.test(t)) return "compliment";
+  if (/(au revoir|bye|à bientôt|a bientot|bonne nuit|à plus)/.test(t)) return "au_revoir";
+  if (/(bonne nouvelle|j'ai réussi|j'ai reussi|j'ai gagné|j'ai gagne|ça a marché|ca a marche|je suis heureux|je suis heureuse|je suis content|je suis contente)/.test(t)) return "positif";
 
   return "general";
 }
 
-function addMessage(text, sender) {
-  const message = document.createElement("div");
-  message.classList.add("message", sender);
-  message.textContent = text;
-  chat.appendChild(message);
+function afficherMessage(texte, auteur) {
+  const bulle = document.createElement("div");
+  bulle.className = "message " + auteur;
+  bulle.textContent = texte;
+  messages.appendChild(bulle);
   chat.scrollTop = chat.scrollHeight;
 }
 
-function answer(message) {
-  const category = detectCategory(message);
-  const bank = responses[category] || responses.general;
-
-  return choose(bank);
+function repondre(texte) {
+  const categorie = detecterCategorie(texte);
+  return choisir(responses[categorie] || responses.general);
 }
 
-function sendMessage(event) {
-  event.preventDefault();
-
-  const message = input.value.trim();
-
+function envoyerMessage(texte) {
+  const message = texte.trim();
   if (!message) return;
 
-  addMessage(message, "user");
+  welcome.hidden = true;
+  afficherMessage(message, "user");
   input.value = "";
 
-  // Petite pause pour rendre la conversation plus naturelle.
+  const attente = document.createElement("div");
+  attente.className = "message bot";
+  attente.textContent = "Loutre réfléchit… 🦦";
+  messages.appendChild(attente);
+  chat.scrollTop = chat.scrollHeight;
+
   setTimeout(() => {
-    addMessage(answer(message), "bot");
-  }, 450);
+    attente.textContent = repondre(message);
+    chat.scrollTop = chat.scrollHeight;
+  }, 500);
 }
 
-form.addEventListener("submit", sendMessage);
+form.addEventListener("submit", (event) => {
+  event.preventDefault();
+  envoyerMessage(input.value);
+});
 
-// Message d'accueil
-addMessage(
-  "Coucou ! Moi, c'est Loutre. 🦦 Tu peux me raconter ce que tu veux : je suis là pour t'envoyer un peu de douceur.",
-  "bot"
-);
+document.querySelectorAll(".suggestion").forEach((bouton) => {
+  bouton.addEventListener("click", () => {
+    envoyerMessage(bouton.textContent);
+  });
+});
+
+newChatButton.addEventListener("click", () => {
+  messages.replaceChildren();
+  welcome.hidden = false;
+  input.value = "";
+  input.focus();
+});
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch((erreur) => {
+      console.warn("Service worker indisponible :", erreur);
+    });
+  });
+}
