@@ -212,10 +212,19 @@ newChatButton.addEventListener("click", () => {
   input.focus();
 });
 
+
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js").catch((erreur) => {
-      console.warn("Service worker indisponible :", erreur);
-    });
+  window.addEventListener("load", async () => {
+    try {
+      const registration = await navigator.serviceWorker.register(
+        "./sw.js",
+        { updateViaCache: "none" }
+      );
+
+      await registration.update();
+    } catch (error) {
+      console.warn("Mise à jour de Loutre impossible :", error);
+    }
   });
 }
+
