@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101713">
+  <meta name="description" content="Loutre — votre assistant qui vous rassure, quoi qu'il arrive.">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <title>Loutre — Tout va bien</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true">🦦</div>
+        <div>
+          <div class="brand-name">Loutre</div>
+          <div class="brand-subtitle"><span class="status-dot"></span> Toujours là pour vous</div>
+        </div>
+      </div>
+      <button class="new-chat" id="newChat" aria-label="Nouvelle conversation" title="Nouvelle conversation">＋</button>
+    </header>
+
+    <section class="chat" id="chat" aria-live="polite">
+      <div class="welcome" id="welcome">
+        <div class="otter-art" aria-hidden="true">🦦</div>
+        <p class="eyebrow">VOTRE ASSISTANT PERSONNEL</p>
+        <h1>Bonjour.<br><span>Tout va bien.</span></h1>
+        <p class="welcome-copy">Posez-moi une question. Je suis là pour vous.</p>
+        <div class="suggestions">
+          <button class="suggestion">Est-ce que tout va bien ?</button>
+          <button class="suggestion">J'ai une question importante</button>
+          <button class="suggestion">Tu es une vraie IA ?</button>
+        </div>
+      </div>
+      <div class="messages" id="messages"></div>
+    </section>
+
+    <form class="composer" id="composer">
+      <label class="sr-only" for="prompt">Votre message</label>
+      <textarea id="prompt" rows="1" placeholder="Écrivez à Loutre…" maxlength="1200"></textarea>
+      <button class="send" type="submit" aria-label="Envoyer le message">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+      </button>
+    </form>
+    <p class="disclaimer">Loutre n'est pas une IA. Mais tout va bien.</p>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

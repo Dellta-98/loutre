@@ -1,0 +1,85 @@
+:root {
+  color-scheme: dark;
+  --bg: #101713;
+  --panel: #19221c;
+  --panel-2: #202b23;
+  --text: #f2f5ef;
+  --muted: #9aa79b;
+  --accent: #b8d4a7;
+  --accent-dark: #293d2d;
+  --line: rgba(235, 245, 231, .09);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background:
+    radial-gradient(ellipse at 50% -10%, rgba(114, 151, 102, .15), transparent 45%),
+    var(--bg);
+}
+button, textarea { font: inherit; }
+.app-shell {
+  width: min(100%, 820px); min-height: 100dvh; margin: 0 auto;
+  display: flex; flex-direction: column; padding: 0 22px;
+}
+.topbar {
+  height: 82px; flex: 0 0 auto; display: flex; align-items: center;
+  justify-content: space-between; border-bottom: 1px solid var(--line);
+}
+.brand { display: flex; gap: 12px; align-items: center; }
+.brand-icon {
+  width: 44px; height: 44px; display: grid; place-items: center;
+  border-radius: 15px; background: #29372c; font-size: 25px;
+}
+.brand-name { font-size: 19px; font-weight: 700; letter-spacing: -.4px; }
+.brand-subtitle { margin-top: 4px; color: var(--muted); font-size: 12px; }
+.status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-right: 5px; }
+.new-chat {
+  width: 42px; height: 42px; border: 1px solid var(--line); border-radius: 14px;
+  color: var(--text); background: var(--panel); font-size: 25px; cursor: pointer;
+}
+.chat { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.welcome { text-align: center; margin: auto 0; padding: 44px 0 32px; }
+.otter-art {
+  width: 82px; height: 82px; display: grid; place-items: center; margin: 0 auto 23px;
+  background: linear-gradient(145deg, #2d4031, #1c2a20); border: 1px solid #3b503d;
+  border-radius: 28px; font-size: 43px; box-shadow: 0 12px 45px rgba(0,0,0,.18);
+}
+.eyebrow { color: var(--accent); font-size: 10px; font-weight: 700; letter-spacing: 2px; }
+h1 { font-size: clamp(35px, 8vw, 52px); line-height: 1.1; letter-spacing: -2px; margin: 15px 0; }
+h1 span { color: var(--accent); }
+.welcome-copy { color: var(--muted); font-size: 15px; }
+.suggestions { display: flex; flex-wrap: wrap; justify-content: center; gap: 9px; margin-top: 28px; }
+.suggestion {
+  background: rgba(255,255,255,.025); border: 1px solid var(--line); color: #c8d2c8;
+  border-radius: 999px; padding: 11px 15px; font-size: 12px; cursor: pointer;
+}
+.suggestion:hover { border-color: #6e8d6d; background: var(--panel); }
+.messages { display: flex; flex-direction: column; gap: 18px; padding: 24px 0; }
+.message { max-width: 86%; display: flex; flex-direction: column; gap: 7px; }
+.message.user { align-self: flex-end; }
+.message.bot { align-self: flex-start; }
+.message-label { color: var(--muted); font-size: 11px; padding: 0 4px; }
+.bubble { padding: 14px 17px; border-radius: 18px; font-size: 15px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
+.user .bubble { background: #2b3a2e; border: 1px solid #3a4a3c; border-bottom-right-radius: 5px; }
+.bot .bubble { background: var(--panel); border: 1px solid var(--line); border-bottom-left-radius: 5px; }
+.composer {
+  flex: 0 0 auto; display: flex; align-items: flex-end; gap: 10px; padding: 10px;
+  background: #1a221c; border: 1px solid #303b32; border-radius: 22px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.15); margin-bottom: 10px;
+}
+textarea {
+  flex: 1; resize: none; max-height: 130px; min-height: 42px; border: 0; outline: 0;
+  background: transparent; color: var(--text); padding: 11px 8px; line-height: 1.4;
+}
+textarea::placeholder { color: #7f8d81; }
+.send {
+  width: 42px; height: 42px; border: 0; border-radius: 14px; background: var(--accent);
+  color: #182219; display: grid; place-items: center; cursor: pointer; flex: 0 0 auto;
+}
+.send svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.send:active { transform: scale(.96); }
+.disclaimer { text-align: center; color: #6f7b70; font-size: 10px; padding: 3px 0 14px; margin: 0; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+@media (min-width: 650px) { .app-shell { padding: 0 34px; } .welcome { padding-top: 60px; } }
+@media (max-height: 650px) { .welcome { margin: 25px 0; padding: 10px 0; } .otter-art { width: 60px; height: 60px; font-size: 32px; margin-bottom: 12px; } .suggestions { margin-top: 15px; } }

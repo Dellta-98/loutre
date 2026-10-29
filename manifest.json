@@ -1,0 +1,18 @@
+{
+  "name": "Loutre — Tout va bien",
+  "short_name": "Loutre",
+  "description": "Votre assistant personnel qui vous rassure, quoi qu'il arrive.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#101713",
+  "theme_color": "#101713",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
