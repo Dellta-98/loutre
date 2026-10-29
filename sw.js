@@ -1,14 +1,67 @@
-const CACHE = "loutre-v2";
-const FILES = ["./", "./index.html", "./style.css", "./app.js", "./manifest.json", "./icon.svg"];
+
+const CACHE = "loutre-v3";
+
+const FILES = [
+  "./",
+  "./index.html",
+  "./style.css",
+  "./app.js",
+  "./manifest.json",
+  "./icon.svg"
+];
+
 self.addEventListener("install", event => {
-  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES)));
+  event.waitUntil(
+    caches.open(CACHE).then(cache => cache.addAll(FILES))
+  );
   self.skipWaiting();
 });
+
 self.addEventListener("activate", event => {
-  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key)))));
+  event.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(
+        keys
+          .filter(key => key.startsWith("loutre-") && key !== CACHE)
+          .map(key => caches.delete(key))
+      )
+    )
+  );
   self.clients.claim();
 });
+
 self.addEventListener("fetch", event => {
   if (event.request.method !== "GET") return;
-  event.respondWith(caches.match(event.request).then(cached => cached || fetch(event.request)));
+
+  const url = new URL(event.request.url);
+  const isAppFile = ["app.js", "index.html", "style.css"].some(
+    file => url.pathname.endsWith("/" + file)
+  );
+
+  if (isAppFile) {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE).then(cache => cache.put(event.request, copy));
+          }
+          return response;
+        })
+        .catch(() =>
+          caches.match(event.request).then(cached => {
+            if (cached) return cached;
+            return new Response("Fichier indisponible hors connexion", {
+              status: 503
+            });
+          })
+        )
+    );
+  } else {
+    event.respondWith(
+      caches.match(event.request).then(cached =>
+        cached || fetch(event.request)
+      )
+    );
+  }
 });
